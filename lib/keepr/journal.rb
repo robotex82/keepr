@@ -7,7 +7,7 @@ class Keepr::Journal < ActiveRecord::Base
   validates_uniqueness_of :number, allow_blank: true
 
   has_many :keepr_postings, -> { order(amount: :desc) },
-           class_name: 'Keepr::Posting', foreign_key: 'keepr_journal_id', dependent: :destroy
+           class_name: 'Keepr::Posting', foreign_key: 'keepr_journal_id', dependent: :destroy, inverse_of: :keepr_journal
 
   belongs_to :accountable, polymorphic: true
 
@@ -44,7 +44,7 @@ class Keepr::Journal < ActiveRecord::Base
   end
 
   def validate_postings
-    if existing_postings.map(&:keepr_account_id).uniq.length < 2
+    if existing_postings.map(&:keepr_account).uniq.length < 2
       # At least two accounts have to be booked
       errors.add :base, :account_missing
     elsif existing_postings.map(&:raw_amount).compact.sum != 0

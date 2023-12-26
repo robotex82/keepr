@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :account, class: Keepr::Account do
-    number { 12_345 }
+    sequence(:number) { |n| n + 10_000 }
     kind { :asset }
     name { 'Foo' }
   end

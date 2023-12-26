@@ -71,7 +71,9 @@ describe Keepr::Posting do
     end
 
     it 'should recognized saved debit posting' do
-      posting = Keepr::Posting.create!(amount: 10, side: 'debit', keepr_account: account_1000, keepr_journal_id: 42)
+      allow_any_instance_of(Keepr::Journal).to receive(:validate_postings).and_return(true)
+      journal = Keepr::Journal.create!
+      posting = Keepr::Posting.create!(amount: 10, side: 'debit', keepr_account: account_1000, keepr_journal: journal)
       posting.reload
 
       expect(posting).to be_debit
@@ -79,7 +81,9 @@ describe Keepr::Posting do
     end
 
     it 'should recognized saved credit posting' do
-      posting = Keepr::Posting.create!(amount: 10, side: 'credit', keepr_account: account_1000, keepr_journal_id: 42)
+      allow_any_instance_of(Keepr::Journal).to receive(:validate_postings).and_return(true)
+      journal = Keepr::Journal.create!
+      posting = Keepr::Posting.create!(amount: 10, side: 'credit', keepr_account: account_1000, keepr_journal: journal)
       posting.reload
 
       expect(posting).to be_credit
@@ -100,8 +104,13 @@ describe Keepr::Posting do
   end
 
   describe 'scopes' do
-    let!(:debit_posting) { Keepr::Posting.create!(amount: 10, side: 'debit', keepr_account: account_1000, keepr_journal_id: 42) }
-    let!(:credit_posting) { Keepr::Posting.create!(amount: 10, side: 'credit', keepr_account: account_1000, keepr_journal_id: 42) }
+    let(:journal) { Keepr::Journal.create! }
+    let(:debit_posting) { Keepr::Posting.create!(amount: 10, side: 'debit', keepr_account: account_1000, keepr_journal: journal) }
+    let(:credit_posting) { Keepr::Posting.create!(amount: 10, side: 'credit', keepr_account: account_1000, keepr_journal: journal) }
+
+    before(:each) do
+      allow_any_instance_of(Keepr::Journal).to receive(:validate_postings).and_return(true)
+    end
 
     it 'should filter' do
       expect(account_1000.keepr_postings.debits).to eq([debit_posting])
@@ -110,16 +119,21 @@ describe Keepr::Posting do
   end
 
   describe 'cost_center handling' do
-    let!(:cost_center) { FactoryBot.create(:cost_center) }
-    let!(:account_8400) { FactoryBot.create(:account, number: 8400, kind: :revenue) }
+    let(:journal) { Keepr::Journal.create! }
+    let(:cost_center) { FactoryBot.create(:cost_center) }
+    let(:account_8400) { FactoryBot.create(:account, number: 8400, kind: :revenue) }
+
+    before(:each) do
+      allow_any_instance_of(Keepr::Journal).to receive(:validate_postings).and_return(true)
+    end
 
     it 'should allow cost_center' do
-      posting = Keepr::Posting.new keepr_account: account_8400, amount: 100, keepr_cost_center: cost_center
+      posting = Keepr::Posting.new keepr_account: account_8400, amount: 100, keepr_cost_center: cost_center, keepr_journal: journal
       expect(posting).to be_valid
     end
 
     it 'should not allow cost_center' do
-      posting = Keepr::Posting.new keepr_account: account_1000, amount: 100, keepr_cost_center: cost_center
+      posting = Keepr::Posting.new keepr_account: account_1000, amount: 100, keepr_cost_center: cost_center, keepr_journal: journal
       expect(posting).to_not be_valid
     end
   end

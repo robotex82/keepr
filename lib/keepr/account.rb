@@ -12,8 +12,8 @@ class Keepr::Account < ActiveRecord::Base
   validate :group_validation
   validate :tax_validation
 
-  has_many :keepr_postings, class_name: 'Keepr::Posting', foreign_key: 'keepr_account_id', dependent: :restrict_with_error
-  has_many :keepr_taxes, class_name: 'Keepr::Tax', foreign_key: 'keepr_account_id', dependent: :restrict_with_error
+  has_many :keepr_postings, class_name: 'Keepr::Posting', foreign_key: 'keepr_account_id', dependent: :restrict_with_error, inverse_of: :keepr_account
+  has_many :keepr_taxes, class_name: 'Keepr::Tax', foreign_key: 'keepr_account_id', dependent: :restrict_with_error, inverse_of: :keepr_account
 
   belongs_to :keepr_tax, class_name: 'Keepr::Tax'
   belongs_to :keepr_group, class_name: 'Keepr::Group'

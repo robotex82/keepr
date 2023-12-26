@@ -3,12 +3,12 @@
 class Keepr::Posting < ActiveRecord::Base
   self.table_name = 'keepr_postings'
 
-  validates_presence_of :keepr_account_id, :amount
+  validates_presence_of :amount
   validate :cost_center_validation
 
-  belongs_to :keepr_account, class_name: 'Keepr::Account'
-  belongs_to :keepr_journal, class_name: 'Keepr::Journal'
-  belongs_to :keepr_cost_center, class_name: 'Keepr::CostCenter'
+  belongs_to :keepr_account, class_name: 'Keepr::Account', optional: false, inverse_of: :keepr_postings
+  belongs_to :keepr_journal, class_name: 'Keepr::Journal', optional: false, inverse_of: :keepr_postings
+  belongs_to :keepr_cost_center, class_name: 'Keepr::CostCenter', inverse_of: :keepr_postings
   belongs_to :accountable, polymorphic: true
 
   SIDE_DEBIT  = 'debit'
