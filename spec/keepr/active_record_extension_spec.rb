@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-describe Keepr::ActiveRecordExtension do
-  let(:account_1000) { FactoryBot.create(:account, number: 1000, kind: :asset) }
-  let(:account_1200) { FactoryBot.create(:account, number: 1200, kind: :asset) }
+RSpec.describe Keepr::ActiveRecordExtension do
+  let(:account_1000) { create(:account, number: 1000, kind: :asset) }
+  let(:account_1200) { create(:account, number: 1200, kind: :asset) }
 
   describe 'ledger with associated account' do
     let(:ledger) { Ledger.create! bank_name: 'Sparkasse' }
@@ -67,6 +65,7 @@ describe Keepr::ActiveRecordExtension do
     it 'has 1 keepr_journal' do
       expect(subject.keepr_journals.size).to eq(1)
     end
+
     it { is_expected.to be_keepr_booked }
   end
 
@@ -82,14 +81,14 @@ describe Keepr::ActiveRecordExtension do
       document
     end
 
-    describe :keepr_booked do
+    describe 'keepr_booked' do
       subject { Document.keepr_booked }
 
       it { is_expected.to include(booked_document) }
       it { is_expected.not_to include(unbooked_document) }
     end
 
-    describe :keepr_unbooked do
+    describe 'keepr_unbooked' do
       subject { Document.keepr_unbooked }
 
       it { is_expected.to include(unbooked_document) }

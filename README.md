@@ -20,7 +20,7 @@ This Ruby gem provides a double entry accounting system for use in any Rails app
 ## Dependencies
 
 * Ruby 3.0+
-* Rails 6.1+ (including Rails 7.1)
+* Rails 6.1+ (including Rails 7.2)
 
 
 ## Installation
@@ -78,24 +78,30 @@ Groups also allow a parent/child hierarchy:
 
 
 Simple journal:
-
-    simple_journal = Keepr::Journal.create keepr_postings_attributes: [
+    
+    journal = Keepr::Journal.new
+    simple_journal = Keepr::Journal.assign_postings(journal, [
       { keepr_account: account_1000, amount: 100.99, side: 'debit' },
       { keepr_account: account_1200, amount: 100.99, side: 'credit' }
-    ]
+    ])
 
 
 Complex journal:
 
-    complex_journal = Keepr::Journal.create keepr_postings_attributes: [
+    journal = Keepr::Journal.new
+    complex_journal = Keepr::Journal.assign_postings(journal, keepr_postings_attributes: [
       { keepr_account: account_4920, amount: 8.40, side: 'debit' },
       { keepr_account: account_1576, amount: 1.60, side: 'debit' },
       { keepr_account: account_1600, amount: 10.00, side: 'credit' }
-    ]
+    ])
 
 Entries can be locked for changing data:
 
 	simple_journal.update! permanent: true
+
+**Performant validations**
+Double entry bookkeeping requires validating pairs of postings before saving. 
+Method `assign_postings` does this for you by leveraging the database to check the sum of all postings.
 
 
 ### Account balance

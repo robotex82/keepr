@@ -1,67 +1,72 @@
 # frozen_string_literal: true
 
-class Keepr::Journal < ActiveRecord::Base
-  self.table_name = 'keepr_journals'
+require_relative 'validators/posting_validator'
 
-  validates_presence_of :date
-  validates_uniqueness_of :number, allow_blank: true
+module Keepr
+  class Journal < ActiveRecord::Base
+    self.table_name = 'keepr_journals'
 
-  has_many :keepr_postings, -> { order(amount: :desc) },
-           class_name: 'Keepr::Posting', foreign_key: 'keepr_journal_id', dependent: :destroy
+    belongs_to :accountable, polymorphic: true
 
-  belongs_to :accountable, polymorphic: true
+    has_many :keepr_postings,
+             class_name: 'Keepr::Posting', foreign_key: 'keepr_journal_id', dependent: :destroy, inverse_of: :keepr_journal
 
-  accepts_nested_attributes_for :keepr_postings, allow_destroy: true, reject_if: :all_blank
+    accepts_nested_attributes_for :keepr_postings, allow_destroy: true, reject_if: :all_blank
 
-  default_scope { order({ date: :desc }, id: :desc) }
+    validates :date, presence: true
+    validates :number, uniqueness: { allow_blank: true }
 
-  validate :validate_postings
+    after_initialize :set_defaults
+    before_update :check_permanent
+    before_destroy :check_permanent
 
-  def credit_postings
-    existing_postings.select(&:credit?)
-  end
+    attr_accessor :update_invocation_allowed
 
-  def debit_postings
-    existing_postings.select(&:debit?)
-  end
+    def self.assign_postings(journal, postings_attributes)
+      @journal = journal
+      ActiveRecord::Base.transaction do
+        @journal.update(keepr_postings_attributes: postings_attributes, update_invocation_allowed: true)
+        Validators::PostingValidator.new.validate(@journal)
 
-  def amount
-    debit_postings.sum(&:amount)
-  end
+        if @journal.errors.any?
+          @journal.define_singleton_method(:valid?) { false }
 
-  after_initialize :set_defaults
-  before_update :check_permanent
-  before_destroy :check_permanent
+          raise ActiveRecord::Rollback
+        end
+      end
 
-  private
-
-  def existing_postings
-    keepr_postings.to_a.delete_if(&:marked_for_destruction?)
-  end
-
-  def set_defaults
-    self.date ||= Date.today
-  end
-
-  def validate_postings
-    if existing_postings.map(&:keepr_account_id).uniq.length < 2
-      # At least two accounts have to be booked
-      errors.add :base, :account_missing
-    elsif existing_postings.map(&:raw_amount).compact.sum != 0
-      # Debit does not match credit
-      errors.add :base, :amount_mismatch
+      @journal
     end
-  end
 
-  def check_permanent
-    return unless permanent_was
+    def update(attributes)
+      update_invocation_allowed = attributes.delete(:update_invocation_allowed)
+      raise 'use `assign_postings` to update journal with validation on postings' if update_invocation_allowed != true && attributes[:keepr_postings_attributes].present?
 
-    # If marked as permanent, no changes are allowed
-    errors.add :base, :changes_not_allowed
+      super
+    end
 
-    if ActiveRecord::VERSION::MAJOR < 5
-      false
-    else
+    def credit_postings
+      keepr_postings.credits
+    end
+
+    def debit_postings
+      keepr_postings.debits
+    end
+
+    def amount
+      debit_postings.sum(&:amount)
+    end
+
+    private
+
+    def set_defaults
+      self.date ||= Date.current
+    end
+
+    def check_permanent
+      return unless permanent_was
+
+      errors.add :base, :changes_not_allowed
       throw :abort
     end
   end

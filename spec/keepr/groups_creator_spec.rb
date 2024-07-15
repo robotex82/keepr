@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-describe Keepr::GroupsCreator do
+RSpec.describe Keepr::GroupsCreator do
   context 'balance groups in german' do
-    before :each do
-      Keepr::GroupsCreator.new(:balance).run
+    before do
+      described_class.new(:balance).run
     end
 
-    it 'should create groups' do
+    it 'creates groups' do
       expect(Keepr::Group.count).to eq(64)
       expect(Keepr::Group.asset.count).to eq(36)
       expect(Keepr::Group.liability.count).to eq(28)
@@ -17,17 +15,17 @@ describe Keepr::GroupsCreator do
       compare_with_source(Keepr::Group.liability, 'de', 'liability.txt')
     end
 
-    it 'should create result group' do
+    it 'creates result group' do
       expect(Keepr::Group.result).to be_a(Keepr::Group)
     end
   end
 
   context 'profit & loss groups' do
-    before :each do
-      Keepr::GroupsCreator.new(:profit_and_loss).run
+    before do
+      described_class.new(:profit_and_loss).run
     end
 
-    it 'should create profit & loss groups' do
+    it 'creates profit & loss groups' do
       expect(Keepr::Group.count).to eq(31)
       expect(Keepr::Group.profit_and_loss.count).to eq(31)
 

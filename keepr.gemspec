@@ -13,23 +13,16 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Some basic ActiveRecord models to build a double entry bookkeeping application'
   spec.homepage      = 'https://github.com/ledermann/keepr'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 3.0'
+  spec.required_ruby_version = '>= 3.2'
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
   spec.add_dependency 'activerecord', '>= 6.1'
   spec.add_dependency 'ancestry', '>= 3.1.0'
+  spec.add_dependency 'concurrent-ruby', '>= 1.3.1'
   spec.add_dependency 'datev', '>= 0.5.0'
 
-  spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'coveralls_reborn'
-  spec.add_development_dependency 'database_cleaner'
-  spec.add_development_dependency 'factory_bot'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'simplecov'
-  spec.add_development_dependency 'sqlite3'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class KeeprMigration < Keepr::MIGRATION_BASE_CLASS
-  def self.up
+  def self.up # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     create_table Keepr::Group, force: true do |t|
       t.integer    :target, null: false
       t.string     :number

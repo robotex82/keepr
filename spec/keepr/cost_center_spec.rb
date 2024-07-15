@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+RSpec.describe Keepr::CostCenter do
+  let(:cost_center) { create(:cost_center) }
+  let(:account_revenue) { create(:account, number: 8400, kind: :revenue) }
+  let(:account_expense) { create(:account, number: 4920, kind: :expense) }
 
-describe Keepr::CostCenter do
-  let(:cost_center) { FactoryBot.create(:cost_center) }
-  let(:account)     { FactoryBot.create(:account, number: 8400, kind: :revenue) }
+  it 'has postings' do
+    journal = Keepr::Journal.create!(
+      keepr_postings_attributes: [
+        { keepr_account: account_revenue, amount: 10, side: 'debit', keepr_cost_center: cost_center },
+        { keepr_account: account_expense, amount: 10, side: 'credit', keepr_cost_center: cost_center }
+      ]
+    )
 
-  it 'should have postings' do
-    posting = Keepr::Posting.create! amount: 10,
-                                     side: 'debit',
-                                     keepr_account: account,
-                                     keepr_cost_center: cost_center,
-                                     keepr_journal_id: 42
-
-    expect(cost_center.keepr_postings).to eq([posting])
+    expect(cost_center.keepr_postings).to eq(journal.keepr_postings)
   end
 end
