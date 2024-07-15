@@ -4,9 +4,10 @@ require 'simplecov'
 require 'coveralls'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                 SimpleCov::Formatter::HTMLFormatter,
-                                                                 Coveralls::SimpleCov::Formatter
-                                                               ])
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+]
+                                                              )
 SimpleCov.start do
   add_filter '/spec/'
 end
@@ -19,7 +20,7 @@ ActiveRecord::Migration.verbose = false
 
 require 'database_cleaner'
 require 'keepr'
-require 'generators/keepr/migration/templates/migration.rb'
+require 'generators/keepr/migration/templates/migration'
 
 require 'factory_bot'
 FactoryBot.find_definitions
@@ -43,6 +44,7 @@ RSpec.configure do |config|
   # the seed, which is printed after each run.
   #     --seed 1234
   #  config.order = 'random'
+  config.include FactoryBot::Syntax::Methods
 
   config.before(:suite) do
     KeeprMigration.up
@@ -57,11 +59,11 @@ RSpec.configure do |config|
     SpecMigration.down
   end
 
-  config.before(:each) do
+  config.before do
     DatabaseCleaner.start
   end
 
-  config.after(:each) do
+  config.after do
     DatabaseCleaner.clean
   end
 end

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-describe Keepr::Tax do
+RSpec.describe Keepr::Tax do
   let!(:tax_account) do
     Keepr::Account.create! number: 1776,
                            name: 'Umsatzsteuer 19%',
@@ -10,10 +8,10 @@ describe Keepr::Tax do
   end
 
   let!(:tax) do
-    Keepr::Tax.create! name: 'USt19',
-                       description: 'Umsatzsteuer 19%',
-                       value: 19.0,
-                       keepr_account: tax_account
+    described_class.create! name: 'USt19',
+                            description: 'Umsatzsteuer 19%',
+                            value: 19.0,
+                            keepr_account: tax_account
   end
 
   let!(:account) do
@@ -23,18 +21,18 @@ describe Keepr::Tax do
                            keepr_tax: tax
   end
 
-  it 'should be direct linked from account' do
+  it 'is direct linked from account' do
     expect(tax.keepr_accounts).to eq([account])
     expect(account.keepr_tax).to eq(tax)
-    expect(tax_account.keepr_tax).to eq(nil)
+    expect(tax_account.keepr_tax).to be_nil
   end
 
-  it 'should be reverse found from account' do
+  it 'is reverse found from account' do
     expect(tax_account.keepr_taxes).to eq([tax])
     expect(account.keepr_taxes).to eq([])
   end
 
-  it 'should avoid circular reference' do
+  it 'avoids circular reference' do
     tax.keepr_account = account
     expect(tax).to be_invalid
     expect(tax.errors[:keepr_account_id]).to be_present

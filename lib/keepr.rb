@@ -16,8 +16,10 @@ require 'keepr/account_export'
 require 'keepr/contact_export'
 require 'keepr/active_record_extension'
 
-class ActiveRecord::Base
-  include Keepr::ActiveRecordExtension
+module ActiveRecord
+  class Base
+    include Keepr::ActiveRecordExtension
+  end
 end
 
 Keepr::MIGRATION_BASE_CLASS = if ActiveRecord::VERSION::MAJOR >= 5

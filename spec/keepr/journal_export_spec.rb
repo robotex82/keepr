@@ -1,53 +1,52 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-describe Keepr::JournalExport do
+RSpec.describe Keepr::JournalExport do
   let(:ust) { Keepr::Tax.create! name: 'USt19', value: 19.0, keepr_account: account_1776 }
   let(:vst) { Keepr::Tax.create! name: 'VSt19', value: 19.0, keepr_account: account_1576 }
 
-  let(:account_1000)  { FactoryBot.create :account, number: 1000, kind: :asset     }
-  let(:account_1200)  { FactoryBot.create :account, number: 1200, kind: :asset     }
-  let(:account_1576)  { FactoryBot.create :account, number: 1576, kind: :asset     }
-  let(:account_1776)  { FactoryBot.create :account, number: 1776, kind: :liability }
-  let(:account_1600)  { FactoryBot.create :account, number: 1600, kind: :liability }
-  let(:account_1718)  { FactoryBot.create :account, number: 1718, kind: :liability, keepr_tax: ust }
-  let(:account_4920)  { FactoryBot.create :account, number: 4920, kind: :expense,   keepr_tax: vst }
-  let(:account_8400)  { FactoryBot.create :account, number: 8400, kind: :revenue,   keepr_tax: ust }
+  let(:account_1000)  { create(:account, number: 1000, kind: :asset)     }
+  let(:account_1200)  { create(:account, number: 1200, kind: :asset)     }
+  let(:account_1576)  { create(:account, number: 1576, kind: :asset)     }
+  let(:account_1776)  { create(:account, number: 1776, kind: :liability) }
+  let(:account_1600)  { create(:account, number: 1600, kind: :liability) }
+  let(:account_1718)  { create(:account, number: 1718, kind: :liability, keepr_tax: ust) }
+  let(:account_4920)  { create(:account, number: 4920, kind: :expense,   keepr_tax: vst) }
+  let(:account_8400)  { create(:account, number: 8400, kind: :revenue,   keepr_tax: ust) }
 
-  let(:account_10000) { FactoryBot.create :account, number: 10_000, kind: :debtor }
+  let(:account_10000) { create(:account, number: 10_000, kind: :debtor) }
 
   let(:scope) { Keepr::Journal.reorder(:number) }
 
   let(:export) do
-    Keepr::JournalExport.new(scope,
-                             'Berater'     => 1_234_567,
-                             'Mandant'     => 78_901,
-                             'Datum vom'   => Date.new(2016, 6, 1),
-                             'Datum bis'   => Date.new(2016, 6, 30),
-                             'WJ-Beginn'   => Date.new(2016, 1, 1),
-                             'Bezeichnung' => 'Keepr-Buchungen') do |posting|
+    described_class.new(scope,
+                        'Berater' => 1_234_567,
+                        'Mandant' => 78_901,
+                        'Datum vom' => Date.new(2016, 6, 1),
+                        'Datum bis' => Date.new(2016, 6, 30),
+                        'WJ-Beginn' => Date.new(2016, 1, 1),
+                        'Bezeichnung' => 'Keepr-Buchungen'
+                       ) do |posting|
       { 'Identifikationsnummer' => "ID:#{posting.id}" }
     end
   end
 
-  describe :to_s do
-    subject { export.to_s }
+  describe 'to_s' do
+    let(:exportable) { export.to_s }
 
     def booking_lines
-      subject.lines[2..-1]
+      exportable.lines[2..]
     end
 
-    it 'should return CSV lines' do
-      expect(subject.lines.count).to eq(2)
-      subject.lines.each { |line| expect(line).to include(';') }
+    it 'returns CSV lines' do
+      expect(exportable.lines.count).to eq(2)
+      exportable.lines.all? { |line| expect(line).to include(';') }
     end
 
-    it 'should include header data' do
-      expect(subject.lines[0]).to include('1234567;')
-      expect(subject.lines[0]).to include('78901;')
-      expect(subject.lines[0]).to include('20160601;20160630;')
-      expect(subject.lines[0]).to include('"Keepr-Buchungen";')
+    it 'includes header data' do
+      expect(exportable.lines[0]).to include('1234567;')
+      expect(exportable.lines[0]).to include('78901;')
+      expect(exportable.lines[0]).to include('20160601;20160630;')
+      expect(exportable.lines[0]).to include('"Keepr-Buchungen";')
     end
 
     context 'Journal without tax' do
@@ -61,7 +60,7 @@ describe Keepr::JournalExport do
                                ]
       end
 
-      it 'should include data' do
+      it 'includes data' do
         expect(booking_lines.count).to eq(1)
 
         expect(booking_lines[0]).to include('"Geldautomat";')
@@ -86,7 +85,7 @@ describe Keepr::JournalExport do
                                ]
       end
 
-      it 'should include data' do
+      it 'includes data' do
         expect(booking_lines.count).to eq(2)
 
         expect(booking_lines[0]).to include('"Telefonrechnung";')
@@ -122,7 +121,7 @@ describe Keepr::JournalExport do
                                ]
       end
 
-      it 'should include data' do
+      it 'includes data' do
         expect(booking_lines.count).to eq(4)
 
         expect(booking_lines[0]).to include('"Warenverkauf mit Anzahlung";')
@@ -158,15 +157,15 @@ describe Keepr::JournalExport do
         expect(booking_lines[3]).to include(';0;')
       end
 
-      it 'should include data from block' do
+      it 'includes data from block' do
         expect(booking_lines[0]).to include('ID:')
         expect(booking_lines[1]).to include('ID:')
       end
     end
   end
 
-  describe :to_file do
-    it 'should create CSV file' do
+  describe 'to_file' do
+    it 'creates CSV file' do
       Dir.mktmpdir do |dir|
         filename = "#{dir}/EXTF_Buchungsstapel.csv"
         export.to_file(filename)

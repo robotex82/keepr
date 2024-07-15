@@ -1,25 +1,27 @@
 # frozen_string_literal: true
 
-module Keepr::ActiveRecordExtension
-  def self.included(base)
-    base.extend ClassMethods
-  end
-
-  module ClassMethods
-    def has_one_keepr_account
-      has_one :keepr_account, class_name: 'Keepr::Account', as: :accountable, dependent: :restrict_with_error
-      has_many :keepr_postings, class_name: 'Keepr::Posting', through: :keepr_account, dependent: :restrict_with_error
+module Keepr
+  module ActiveRecordExtension
+    def self.included(base)
+      base.extend ClassMethods
     end
 
-    def has_many_keepr_accounts
-      has_many :keepr_accounts, class_name: 'Keepr::Account', as: :accountable, dependent: :restrict_with_error
-      has_many :keepr_postings, class_name: 'Keepr::Posting', through: :keepr_accounts, dependent: :restrict_with_error
-    end
+    module ClassMethods
+      def has_one_keepr_account
+        has_one :keepr_account, class_name: 'Keepr::Account', as: :accountable, dependent: :restrict_with_error
+        has_many :keepr_postings, class_name: 'Keepr::Posting', through: :keepr_account, dependent: :restrict_with_error
+      end
 
-    def has_keepr_journals
-      has_many :keepr_journals, class_name: 'Keepr::Journal', as: :accountable, dependent: :restrict_with_error
+      def has_many_keepr_accounts
+        has_many :keepr_accounts, class_name: 'Keepr::Account', as: :accountable, dependent: :restrict_with_error
+        has_many :keepr_postings, class_name: 'Keepr::Posting', through: :keepr_accounts,
+                                  dependent: :restrict_with_error
+      end
 
-      class_eval <<-CODE, __FILE__, __LINE__ + 1
+      def has_keepr_journals
+        has_many :keepr_journals, class_name: 'Keepr::Journal', as: :accountable, dependent: :restrict_with_error
+
+        class_eval <<-CODE, __FILE__, __LINE__ + 1
         def keepr_booked?
           keepr_journals.exists?
         end
@@ -29,11 +31,12 @@ module Keepr::ActiveRecordExtension
                                     where('keepr_journals.id' => nil)
                                   }
         scope :keepr_booked,   -> { joins(:keepr_journals) }
-      CODE
-    end
+        CODE
+      end
 
-    def has_keepr_postings
-      has_many :keepr_postings, class_name: 'Keepr::Posting', as: :accountable, dependent: :restrict_with_error
+      def has_keepr_postings
+        has_many :keepr_postings, class_name: 'Keepr::Posting', as: :accountable, dependent: :restrict_with_error
+      end
     end
   end
 end
